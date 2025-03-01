@@ -36,6 +36,19 @@ function loadApiKey() {
   return null;
 }
 
+async function promptForApiKey() {
+  const { apiKey } = await inquirer.prompt([
+    {
+      type: "input",
+      name: "apiKey",
+      message: "Enter your Gemini API Key: ",
+      validate: (input) => (input ? true : "API key cannot be empty."),
+    },
+  ]);
+  fs.writeFileSync(apiKeyFilePath, apiKey, "utf8");
+  return apiKey;
+}
+
 async function fetchLatestVersion() {
   return new Promise((resolve, reject) => {
     exec("npm show shell-sage version", (error, stdout) => {
@@ -50,6 +63,10 @@ async function fetchLatestVersion() {
 
 async function updatePackage() {
   console.log(chalk.blue("Checking for updates..."));
+
+  // **Remove API key before updating**
+  removeApiKey();
+
   try {
     const latestVersion = await fetchLatestVersion();
     console.log(chalk.green(`Latest version available: v${latestVersion}`));
@@ -64,6 +81,15 @@ async function updatePackage() {
     });
   } catch (error) {
     console.error(chalk.red(error));
+  }
+}
+
+function removeApiKey() {
+  if (fs.existsSync(apiKeyFilePath)) {
+    fs.unlinkSync(apiKeyFilePath);
+    console.log(chalk.yellow("API key removed."));
+  } else {
+    console.log(chalk.red("No stored API key found."));
   }
 }
 
@@ -90,11 +116,13 @@ function showModel() {
 async function startChatbot() {
   displayBanner();
   await new Promise((resolve) => setTimeout(resolve, 700));
-  const apiKey = loadApiKey();
+
+  let apiKey = loadApiKey();
   if (!apiKey) {
-    console.log(chalk.red("No API key found. Run 'shell-sage --help' to set it up."));
-    process.exit(1);
+    console.log(chalk.red("No API key found. Please enter one."));
+    apiKey = await promptForApiKey();
   }
+
   while (true) {
     const userMessage = await askForMessage();
     if (userMessage.toLowerCase() === "exit") {
@@ -135,6 +163,8 @@ if (args.length === 0) {
   showVersion();
 } else if (args.includes("--model")) {
   showModel();
+} else if (args.includes("--remove-api")) {
+  removeApiKey();
 } else if (args.includes("--update")) {
   updatePackage();
 } else {

@@ -11,7 +11,7 @@ import os from "os";
 import path from "path";
 
 const apiKeyFilePath = path.join(os.homedir(), ".gemini_api_key");
-const DEFAULT_MODEL = "gemini-2.0-flash";
+let DEFAULT_MODEL = "gemini-2.0-flash";
 
 function displayBanner() {
   figlet("shell-sage", (error, data) => {
@@ -55,6 +55,7 @@ async function askForAPI() {
     return apiKey;
   }
 
+  console.log(chalk.blue("You can get your API key from: https://aistudio.google.com/apikey\n"));
   const response = await inquirer.prompt([
     {
       type: "input",
@@ -67,6 +68,32 @@ async function askForAPI() {
   saveApiKey(apiKey);
   console.log(chalk.green("API Key saved successfully!\n"));
   return apiKey;
+}
+
+async function fetchAvailableModels(apiKey) {
+  try {
+    const url = `https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`;
+    const response = await axios.get(url);
+    return response.data.models.map((model) => model.name);
+  } catch (error) {
+    console.error(chalk.red("Failed to fetch available models."));
+    return [DEFAULT_MODEL];
+  }
+}
+
+async function askForModel(apiKey) {
+  const models = await fetchAvailableModels(apiKey);
+  const response = await inquirer.prompt([
+    {
+      type: "list",
+      name: "model",
+      message: "Select the model you want to use:",
+      choices: models,
+      default: DEFAULT_MODEL,
+    },
+  ]);
+  DEFAULT_MODEL = response.model;
+  console.log(chalk.green(`Model set to: ${DEFAULT_MODEL}\n`));
 }
 
 async function askForMessage() {
@@ -114,17 +141,18 @@ function showVersion() {
   console.log("Shell-Sage CLI v1.0.0");
 }
 
-function showModelInfo() {
+async function showModelInfo(apiKey) {
+  const models = await fetchAvailableModels(apiKey);
   console.log("Current model: " + chalk.green(DEFAULT_MODEL));
   console.log("Available models:");
-  console.log("  - gemini-2.0-flash (default)");
+  models.forEach((model) => console.log(`  - ${model}`));
 }
 
 async function startGeminiBot() {
   displayBanner();
   await new Promise((resolve) => setTimeout(resolve, 1500));
   const apiKey = await askForAPI();
-
+  await askForModel(apiKey);
   while (true) {
     const userMessage = await askForMessage();
     if (userMessage.toLowerCase() === "exit") {
@@ -139,12 +167,13 @@ async function startGeminiBot() {
 }
 
 const args = process.argv.slice(2);
+const apiKey = loadApiKey();
 if (args.includes("--help")) {
   showHelp();
 } else if (args.includes("--version")) {
   showVersion();
 } else if (args.includes("--model")) {
-  showModelInfo();
+  showModelInfo(apiKey);
 } else if (args.includes("--remove-api")) {
   removeApiKey();
 } else {

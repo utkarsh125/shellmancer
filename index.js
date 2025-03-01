@@ -74,7 +74,9 @@ async function fetchAvailableModels(apiKey) {
   try {
     const url = `https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`;
     const response = await axios.get(url);
-    return response.data.models.map((model) => model.name);
+    return response.data.models
+      .map((model) => model.name)
+      .filter((model) => model.includes("chat")); // Filter only chat models
   } catch (error) {
     console.error(chalk.red("Failed to fetch available models."));
     return [DEFAULT_MODEL];
@@ -83,6 +85,10 @@ async function fetchAvailableModels(apiKey) {
 
 async function askForModel(apiKey) {
   const models = await fetchAvailableModels(apiKey);
+  if (models.length === 0) {
+    console.log(chalk.yellow("No chat models available. Using default model."));
+    return;
+  }
   const response = await inquirer.prompt([
     {
       type: "list",
@@ -123,7 +129,7 @@ async function callGeminiAPI(apiKey, message) {
     }
   } catch (error) {
     spinner.error({ text: "Error calling Gemini API." });
-    console.error(chalk.red(error));
+    console.error(chalk.red(error.response?.data || error.message));
     return null;
   }
 }

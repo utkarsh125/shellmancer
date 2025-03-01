@@ -3,6 +3,7 @@
 import axios from "axios";
 import chalk from "chalk";
 import { createSpinner } from "nanospinner";
+import { exec } from "child_process";
 import figlet from "figlet";
 import fs from "fs";
 import gradient from "gradient-string";
@@ -11,7 +12,7 @@ import os from "os";
 import path from "path";
 
 const apiKeyFilePath = path.join(os.homedir(), ".gemini_api_key");
-const DEFAULT_MODEL = "gemini-2.0-flash";
+let DEFAULT_MODEL = "gemini-2.0-flash";
 
 function displayBanner() {
   figlet("shell-sage", (error, data) => {
@@ -35,70 +36,34 @@ function loadApiKey() {
   return null;
 }
 
-function saveApiKey(apiKey) {
-  fs.writeFileSync(apiKeyFilePath, apiKey, { encoding: "utf8", flag: "w" });
+async function fetchLatestVersion() {
+  return new Promise((resolve, reject) => {
+    exec("npm show shell-sage version", (error, stdout) => {
+      if (error) {
+        reject("Failed to fetch latest version.");
+      } else {
+        resolve(stdout.trim());
+      }
+    });
+  });
 }
 
-function removeApiKey() {
-  if (fs.existsSync(apiKeyFilePath)) {
-    fs.unlinkSync(apiKeyFilePath);
-    console.log(chalk.red("API Key removed successfully!"));
-  } else {
-    console.log(chalk.yellow("No API Key found to remove."));
-  }
-}
-
-async function askForAPI() {
-  let apiKey = loadApiKey();
-  if (apiKey) {
-    console.log(chalk.green("Loaded API Key from storage.\n"));
-    return apiKey;
-  }
-
-  console.log(chalk.blue("You can get your API key from: ") + chalk.underline.blue("https://aistudio.google.com/apikey\n"));
-  const response = await inquirer.prompt([
-    {
-      type: "input",
-      name: "apiKey",
-      message: "Enter your Gemini API Key (will be stored on your machine): ",
-      validate: (input) => (input.trim() ? true : "API key cannot be empty"),
-    },
-  ]);
-  apiKey = response.apiKey.trim();
-  saveApiKey(apiKey);
-  console.log(chalk.green("API Key saved successfully!\n"));
-  return apiKey;
-}
-
-async function askForMessage() {
-  const { message } = await inquirer.prompt([
-    {
-      type: "input",
-      name: "message",
-      message: "Ask your query to Gemini (or type 'exit' to quit): ",
-    },
-  ]);
-  return message;
-}
-
-async function callGeminiAPI(apiKey, message) {
-  const spinner = createSpinner("Calling Gemini API...").start();
+async function updatePackage() {
+  console.log(chalk.blue("Checking for updates..."));
   try {
-    const url = `https://generativelanguage.googleapis.com/v1/models/${DEFAULT_MODEL}:generateContent?key=${apiKey}`;
-    const payload = { contents: [{ parts: [{ text: message }] }] };
-    const response = await axios.post(url, payload, { headers: { "Content-Type": "application/json" } });
-    spinner.success({ text: "Response received!" });
-    if (
-      response.data?.candidates?.[0]?.content?.parts?.[0]?.text
-    ) {
-      return chalk.yellow(response.data.candidates[0].content.parts[0].text);
-    } else {
-      return "No output returned";
-    }
+    const latestVersion = await fetchLatestVersion();
+    console.log(chalk.green(`Latest version available: v${latestVersion}`));
+    console.log(chalk.blue("Updating shell-sage to the latest version..."));
+    exec("npm install -g shell-sage", (error, stdout) => {
+      if (error) {
+        console.error(chalk.red("Update failed: " + error.message));
+        return;
+      }
+      console.log(chalk.green("Update successful!"));
+      console.log(stdout);
+    });
   } catch (error) {
-    spinner.error({ text: "Error calling Gemini API." });
-    console.error(chalk.red(error.response?.data || error.message));
-    return null;
+    console.error(chalk.red(error));
   }
 }
 
@@ -108,35 +73,38 @@ function showHelp() {
   console.log("  --help         Show available commands");
   console.log("  --version      Show version info");
   console.log("  --model        Show the current model");
-  console.log("  --remove-api   Remove stored API key\n");
+  console.log("  --remove-api   Remove stored API key");
+  console.log("  --update       Update shell-sage to the latest version\n");
 }
 
 function showVersion() {
-  console.log("Shell-Sage CLI v1.0.0");
+  fetchLatestVersion()
+    .then((latestVersion) => console.log(`Shell-Sage CLI v${latestVersion}`))
+    .catch(() => console.log("Shell-Sage CLI (version fetch failed)"));
 }
 
 function showModel() {
   console.log("Current model: " + chalk.green(DEFAULT_MODEL));
 }
 
-async function startGeminiBot() {
-  displayBanner();
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-  const apiKey = await askForAPI();
-  process.on("SIGINT", () => {
-    console.log(chalk.red("\n\nShell-Sage interrupted through CTRL+C, exiting..."));
+process.on("SIGINT", () => {
+  console.log(chalk.red("\n\nShell-Sage interrupted through CTRL+C, exiting..."));
+  process.exit(0);
+});
+
+async function askForMessage() {
+  try {
+    const { message } = await inquirer.prompt([
+      {
+        type: "input",
+        name: "message",
+        message: "Ask your query to Gemini (or type 'exit' to quit): ",
+      },
+    ]);
+    return message;
+  } catch (error) {
+    console.log(chalk.red("\nShell-Sage interrupted through CTRL+C, exiting..."));
     process.exit(0);
-  });
-  while (true) {
-    const userMessage = await askForMessage();
-    if (userMessage.toLowerCase() === "exit") {
-      console.log(chalk.yellow("Exiting GeminiBot CLI..."));
-      break;
-    }
-    const response = await callGeminiAPI(apiKey, userMessage);
-    if (response) {
-      console.log(chalk.blue("Gemini Bot says: ") + response, "\n");
-    }
   }
 }
 
@@ -147,8 +115,8 @@ if (args.includes("--help")) {
   showVersion();
 } else if (args.includes("--model")) {
   showModel();
-} else if (args.includes("--remove-api")) {
-  removeApiKey();
+} else if (args.includes("--update")) {
+  updatePackage();
 } else {
-  startGeminiBot();
+  console.log(chalk.red("Invalid command. Use --help to see available options."));
 }

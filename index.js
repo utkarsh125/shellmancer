@@ -87,6 +87,24 @@ function showModel() {
   console.log("Current model: " + chalk.green(DEFAULT_MODEL));
 }
 
+async function startChatbot() {
+  displayBanner();
+  await new Promise((resolve) => setTimeout(resolve, 700));
+  const apiKey = loadApiKey();
+  if (!apiKey) {
+    console.log(chalk.red("No API key found. Run 'shell-sage --help' to set it up."));
+    process.exit(1);
+  }
+  while (true) {
+    const userMessage = await askForMessage();
+    if (userMessage.toLowerCase() === "exit") {
+      console.log(chalk.yellow("Exiting Shell-Sage..."));
+      break;
+    }
+    console.log(chalk.blue("Gemini Bot says: ") + chalk.yellow("[Response Here]") + "\n");
+  }
+}
+
 process.on("SIGINT", () => {
   console.log(chalk.red("\n\nShell-Sage interrupted through CTRL+C, exiting..."));
   process.exit(0);
@@ -109,7 +127,9 @@ async function askForMessage() {
 }
 
 const args = process.argv.slice(2);
-if (args.includes("--help")) {
+if (args.length === 0) {
+  startChatbot();
+} else if (args.includes("--help")) {
   showHelp();
 } else if (args.includes("--version")) {
   showVersion();

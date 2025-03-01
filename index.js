@@ -11,19 +11,7 @@ import os from "os";
 import path from "path";
 
 const apiKeyFilePath = path.join(os.homedir(), ".gemini_api_key");
-let DEFAULT_MODEL = "gemini-2.0-flash";
-const AVAILABLE_MODELS = [
-  "gemini-2.0-flash",
-  "gemini-2.0-flash-001",
-  "gemini-2.0-flash-lite",
-  "gemini-2.0-flash-lite-001",
-  "gemini-1.5-pro",
-  "gemini-1.5-pro-001",
-  "gemini-1.5-pro-002",
-  "gemini-1.5-flash",
-  "gemini-1.5-flash-001",
-  "gemini-1.5-flash-002"
-];
+const DEFAULT_MODEL = "gemini-2.0-flash";
 
 function displayBanner() {
   figlet("shell-sage", (error, data) => {
@@ -67,7 +55,7 @@ async function askForAPI() {
     return apiKey;
   }
 
-  console.log(chalk.blue("You can get your API key from: https://aistudio.google.com/apikey\n"));
+  console.log(chalk.blue("You can get your API key from: ") + chalk.underline.blue("https://aistudio.google.com/apikey\n"));
   const response = await inquirer.prompt([
     {
       type: "input",
@@ -80,20 +68,6 @@ async function askForAPI() {
   saveApiKey(apiKey);
   console.log(chalk.green("API Key saved successfully!\n"));
   return apiKey;
-}
-
-async function askForModel() {
-  const response = await inquirer.prompt([
-    {
-      type: "list",
-      name: "model",
-      message: "Select the model you want to use:",
-      choices: AVAILABLE_MODELS,
-      default: DEFAULT_MODEL,
-    },
-  ]);
-  DEFAULT_MODEL = response.model;
-  console.log(chalk.green(`Model set to: ${DEFAULT_MODEL}\n`));
 }
 
 async function askForMessage() {
@@ -117,7 +91,7 @@ async function callGeminiAPI(apiKey, message) {
     if (
       response.data?.candidates?.[0]?.content?.parts?.[0]?.text
     ) {
-      return response.data.candidates[0].content.parts[0].text;
+      return chalk.yellow(response.data.candidates[0].content.parts[0].text);
     } else {
       return "No output returned";
     }
@@ -133,7 +107,7 @@ function showHelp() {
   console.log("Options:");
   console.log("  --help         Show available commands");
   console.log("  --version      Show version info");
-  console.log("  --model        Show current and available models");
+  console.log("  --model        Show the current model");
   console.log("  --remove-api   Remove stored API key\n");
 }
 
@@ -141,17 +115,18 @@ function showVersion() {
   console.log("Shell-Sage CLI v1.0.0");
 }
 
-function showModelInfo() {
+function showModel() {
   console.log("Current model: " + chalk.green(DEFAULT_MODEL));
-  console.log("Available models:");
-  AVAILABLE_MODELS.forEach((model) => console.log(`  - ${model}`));
 }
 
 async function startGeminiBot() {
   displayBanner();
   await new Promise((resolve) => setTimeout(resolve, 1500));
   const apiKey = await askForAPI();
-  await askForModel();
+  process.on("SIGINT", () => {
+    console.log(chalk.red("\n\nShell-Sage interrupted through CTRL+C, exiting..."));
+    process.exit(0);
+  });
   while (true) {
     const userMessage = await askForMessage();
     if (userMessage.toLowerCase() === "exit") {
@@ -160,7 +135,7 @@ async function startGeminiBot() {
     }
     const response = await callGeminiAPI(apiKey, userMessage);
     if (response) {
-      console.log(chalk.blue("Gemini Bot says: " + response), "\n");
+      console.log(chalk.blue("Gemini Bot says: ") + response, "\n");
     }
   }
 }
@@ -171,7 +146,7 @@ if (args.includes("--help")) {
 } else if (args.includes("--version")) {
   showVersion();
 } else if (args.includes("--model")) {
-  showModelInfo();
+  showModel();
 } else if (args.includes("--remove-api")) {
   removeApiKey();
 } else {

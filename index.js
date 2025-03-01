@@ -12,6 +12,7 @@ import os from "os";
 import path from "path";
 
 const apiKeyFilePath = path.join(os.homedir(), ".gemini_api_key");
+// Set the default model to use
 let DEFAULT_MODEL = "gemini-2.0-flash";
 
 function displayBanner() {
@@ -113,13 +114,30 @@ function showModel() {
   console.log("Current model: " + chalk.green(DEFAULT_MODEL));
 }
 
-// New function to send a query to the Gemini API
+// New function to send a query to the Gemini API using the dynamic endpoint
 async function queryGemini(apiKey, query) {
+  // Build the endpoint URL using the DEFAULT_MODEL and the API key
+  const url = `https://generativelanguage.googleapis.com/v1/models/${DEFAULT_MODEL}:generateContent?key=${apiKey}`;
   try {
     const response = await axios.post(
-      "https://api.gemini.example/endpoint", // Replace with the actual Gemini API endpoint
-      { query: query },
-      { headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" } }
+      url,
+      {
+        // The request body follows the expected format
+        contents: [
+          {
+            parts: [
+              {
+                text: query
+              }
+            ]
+          }
+        ]
+      },
+      {
+        headers: {
+          "Content-Type": "application/json"
+        }
+      }
     );
     return response.data;
   } catch (error) {
@@ -146,7 +164,9 @@ async function startChatbot() {
     }
     const result = await queryGemini(apiKey, userMessage);
     if (result) {
-      console.log(chalk.blue("Gemini Bot says: ") + chalk.yellow(JSON.stringify(result)) + "\n");
+      // Display the response text extracted from the response data
+      const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text || "[No text response]";
+      console.log(chalk.blue("Gemini Bot says: ") + chalk.yellow(responseText) + "\n");
     } else {
       console.log(chalk.red("No response from Gemini."));
     }

@@ -4,6 +4,10 @@
 ![JavaScript](https://img.shields.io/badge/JavaScript-ES6%2B-yellow?logo=javascript)
 ![Gemini API](https://img.shields.io/badge/Gemini-API-blue?logo=google)
 
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/f813c74d-4163-43cc-8b0c-d2d32c46e1f1"/>
+</p>
+
 A minimalistic terminal chatbot for interacting with Google's Gemini 2.0 Flash API. This CLI tool allows you to query the Gemini API using your API key, which is stored persistently on your system.
 
 ## Features

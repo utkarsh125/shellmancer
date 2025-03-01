@@ -76,7 +76,7 @@ async function fetchAvailableModels(apiKey) {
     const response = await axios.get(url);
     return response.data.models
       .map((model) => model.name)
-      .filter((model) => model.includes("chat")); // Filter only chat models
+      .filter((model) => model.includes("flash")); // Filter only chat models
   } catch (error) {
     console.error(chalk.red("Failed to fetch available models."));
     return [DEFAULT_MODEL];

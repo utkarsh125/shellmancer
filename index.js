@@ -64,7 +64,7 @@ async function fetchLatestVersion() {
 async function updatePackage() {
   console.log(chalk.blue("Checking for updates..."));
 
-  // **Remove API key before updating**
+  // Remove API key before updating
   removeApiKey();
 
   try {
@@ -113,6 +113,21 @@ function showModel() {
   console.log("Current model: " + chalk.green(DEFAULT_MODEL));
 }
 
+// New function to send a query to the Gemini API
+async function queryGemini(apiKey, query) {
+  try {
+    const response = await axios.post(
+      "https://api.gemini.example/endpoint", // Replace with the actual Gemini API endpoint
+      { query: query },
+      { headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" } }
+    );
+    return response.data;
+  } catch (error) {
+    console.error(chalk.red("Error querying Gemini:"), error.message);
+    return null;
+  }
+}
+
 async function startChatbot() {
   displayBanner();
   await new Promise((resolve) => setTimeout(resolve, 700));
@@ -129,7 +144,12 @@ async function startChatbot() {
       console.log(chalk.yellow("Exiting Shell-Sage..."));
       break;
     }
-    console.log(chalk.blue("Gemini Bot says: ") + chalk.yellow("[Response Here]") + "\n");
+    const result = await queryGemini(apiKey, userMessage);
+    if (result) {
+      console.log(chalk.blue("Gemini Bot says: ") + chalk.yellow(JSON.stringify(result)) + "\n");
+    } else {
+      console.log(chalk.red("No response from Gemini."));
+    }
   }
 }
 

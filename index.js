@@ -22,8 +22,8 @@ function displayBanner() {
     }
     console.log(gradient.pastel.multiline(data));
   });
-  console.log(chalk.white.bgGreen("Terminal chatbot for the minimalistic experience"));
-  console.log(chalk.white.bgMagentaBright("creator: utkarsh125"));
+  console.log(chalk.blueBright("Terminal chatbot for the minimalistic experience"));
+  console.log(chalk.greenBright("creator: utkarsh125"));
 }
 
 function loadApiKey() {

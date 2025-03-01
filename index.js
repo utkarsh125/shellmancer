@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import axios from "axios"; // Make sure to install axios: npm install axios
+import axios from "axios";
 import chalk from "chalk";
 import { createSpinner } from "nanospinner";
 import figlet from "figlet";
@@ -10,10 +10,9 @@ import inquirer from "inquirer";
 import os from "os";
 import path from "path";
 
-// Define the path for the API key file in the user's home directory
 const apiKeyFilePath = path.join(os.homedir(), ".gemini_api_key");
+const DEFAULT_MODEL = "gemini-2.0-flash";
 
-// Function to display the ASCII Banner
 function displayBanner() {
   figlet("shell-sage", (error, data) => {
     if (error) {
@@ -26,7 +25,6 @@ function displayBanner() {
   console.log(chalk.bgMagentaBright("creator: utkarsh125"));
 }
 
-// Function to load API key from persistent storage
 function loadApiKey() {
   if (fs.existsSync(apiKeyFilePath)) {
     const storedKey = fs.readFileSync(apiKeyFilePath, "utf8").trim();
@@ -37,12 +35,19 @@ function loadApiKey() {
   return null;
 }
 
-// Function to save the API key persistently
 function saveApiKey(apiKey) {
   fs.writeFileSync(apiKeyFilePath, apiKey, { encoding: "utf8", flag: "w" });
 }
 
-// Prompt user to get their API key if not stored already
+function removeApiKey() {
+  if (fs.existsSync(apiKeyFilePath)) {
+    fs.unlinkSync(apiKeyFilePath);
+    console.log(chalk.red("API Key removed successfully!"));
+  } else {
+    console.log(chalk.yellow("No API Key found to remove."));
+  }
+}
+
 async function askForAPI() {
   let apiKey = loadApiKey();
   if (apiKey) {
@@ -55,12 +60,7 @@ async function askForAPI() {
       type: "input",
       name: "apiKey",
       message: "Enter your Gemini API Key (will be stored on your machine): ",
-      validate: (input) => {
-        if (!input || input.trim() === "") {
-          return "API key cannot be empty";
-        }
-        return true;
-      },
+      validate: (input) => (input.trim() ? true : "API key cannot be empty"),
     },
   ]);
   apiKey = response.apiKey.trim();
@@ -69,7 +69,6 @@ async function askForAPI() {
   return apiKey;
 }
 
-// Prompt user for a message to send to Gemini
 async function askForMessage() {
   const { message } = await inquirer.prompt([
     {
@@ -81,37 +80,15 @@ async function askForMessage() {
   return message;
 }
 
-// Function to interact with the Gemini API using the updated endpoint and payload
 async function callGeminiAPI(apiKey, message) {
   const spinner = createSpinner("Calling Gemini API...").start();
-
   try {
-    // Construct the URL with the API key
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-    
-    // Prepare the payload according to the API documentation
-    const payload = {
-      contents: [
-        {
-          parts: [{ text: message }],
-        },
-      ],
-    };
-
-    const response = await axios.post(url, payload, {
-      headers: { "Content-Type": "application/json" },
-    });
-
+    const url = `https://generativelanguage.googleapis.com/v1/models/${DEFAULT_MODEL}:generateContent?key=${apiKey}`;
+    const payload = { contents: [{ parts: [{ text: message }] }] };
+    const response = await axios.post(url, payload, { headers: { "Content-Type": "application/json" } });
     spinner.success({ text: "Response received!" });
-    
-    // Extract the output from the API response (this structure may vary)
     if (
-      response.data &&
-      response.data.candidates &&
-      response.data.candidates[0] &&
-      response.data.candidates[0].content &&
-      response.data.candidates[0].content.parts &&
-      response.data.candidates[0].content.parts[0]
+      response.data?.candidates?.[0]?.content?.parts?.[0]?.text
     ) {
       return response.data.candidates[0].content.parts[0].text;
     } else {
@@ -124,15 +101,30 @@ async function callGeminiAPI(apiKey, message) {
   }
 }
 
+function showHelp() {
+  console.log(`\nUsage: shell-sage [options]\n`);
+  console.log("Options:");
+  console.log("  --help         Show available commands");
+  console.log("  --version      Show version info");
+  console.log("  --model        Show current and available models");
+  console.log("  --remove-api   Remove stored API key\n");
+}
+
+function showVersion() {
+  console.log("Shell-Sage CLI v1.0.0");
+}
+
+function showModelInfo() {
+  console.log("Current model: " + chalk.green(DEFAULT_MODEL));
+  console.log("Available models:");
+  console.log("  - gemini-2.0-flash (default)");
+}
+
 async function startGeminiBot() {
   displayBanner();
-  // Wait for the banner to render
   await new Promise((resolve) => setTimeout(resolve, 1500));
-
-  // Get the API key (loaded from persistent storage if available)
   const apiKey = await askForAPI();
 
-  // Chat loop
   while (true) {
     const userMessage = await askForMessage();
     if (userMessage.toLowerCase() === "exit") {
@@ -146,4 +138,15 @@ async function startGeminiBot() {
   }
 }
 
-startGeminiBot();
+const args = process.argv.slice(2);
+if (args.includes("--help")) {
+  showHelp();
+} else if (args.includes("--version")) {
+  showVersion();
+} else if (args.includes("--model")) {
+  showModelInfo();
+} else if (args.includes("--remove-api")) {
+  removeApiKey();
+} else {
+  startGeminiBot();
+}

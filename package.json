@@ -1,6 +1,6 @@
 {
   "name": "shellmancer",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A simple AI based CLI helper tool",
   "main": "index.js",
   "type": "module",

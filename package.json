@@ -1,5 +1,5 @@
 {
-  "name": "shell-sage",
+  "name": "shellmancer",
   "version": "2.3.5",
   "description": "",
   "main": "index.js",
@@ -8,7 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "shell-sage": "./index.js"
+    "shellmancer": "./index.js"
   },
   "keywords": [],
   "author": "",
@@ -20,6 +20,7 @@
     "figlet": "^1.8.0",
     "gradient-string": "^3.0.0",
     "inquirer": "^12.4.2",
-    "nanospinner": "^1.2.2"
+    "nanospinner": "^1.2.2",
+    "remove-markdown": "^0.6.0"
   }
 }

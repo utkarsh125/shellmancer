@@ -4,6 +4,7 @@ import { showHelp, showVersion } from "./src/display.js";
 
 import chalk from "chalk";
 import { explainCommand } from "./src/commands/explain.js";
+import { fixError } from "./src/commands/fix.js";
 import { generateScript } from "./src/commands/generateScript.js";
 import { getDefaultModel } from "./src/config.js";
 import { removeApiKey } from "./src/config.js";
@@ -38,6 +39,16 @@ if (args.length === 0) {
       }
       break;
     }
+
+    case "fix":{
+      const errorMessage = args.slice(1).join(" ");
+      if(!errorMessage){
+        console.log(chalk.red("Please provide an error message for debugging assistance."));
+      }else{
+        fixError(errorMessage);
+      }
+      break;
+    }
     case "system-info":
       systemInfo();
       break;
@@ -69,3 +80,4 @@ if (args.length === 0) {
       console.log(chalk.red("Invalid command. Use --help to see available options."));
   }
 }
+

@@ -2,6 +2,7 @@
 
 import { showHelp, showVersion } from "./src/display.js";
 
+import { automateTask } from "./src/commands/automate.js";
 import chalk from "chalk";
 import { explainCommand } from "./src/commands/explain.js";
 import { fixError } from "./src/commands/fix.js";
@@ -36,6 +37,16 @@ if (args.length === 0) {
         console.log(chalk.red("Please provide a description for script generation."));
       } else {
         generateScript(description);
+      }
+      break;
+    }
+    case "automate": {
+      const taskDescription = args.slice(1).join(" ");
+      if(!taskDescription){
+        console.log(chalk.red("Please provide a description for the automated task."));
+
+      }else {
+        automateTask(taskDescription);
       }
       break;
     }

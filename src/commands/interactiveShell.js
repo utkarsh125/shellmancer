@@ -3,6 +3,7 @@ import { displayBanner } from "../display.js";
 import { exec } from "child_process";
 import fs from "fs";
 import { getApiKey } from "../config.js";
+import inquirer from "inquirer";
 import os from "os";
 import path from "path";
 import { queryGemini } from "../api.js";
@@ -11,7 +12,6 @@ import readline from "readline";
 function isOSCommand(cmd) {
   const firstToken = cmd.split(" ")[0];
   const platform = os.platform();
-
   const lookupCommand = platform === "win32" ? "where" : "which";
   return new Promise((resolve) => {
     exec(`${lookupCommand} ${firstToken}`, (error, stdout) => {
@@ -22,9 +22,7 @@ function isOSCommand(cmd) {
 
 function executeOSCommand(cmd) {
   const platform = os.platform();
-
   const shellOption = platform === "win32" ? "cmd.exe" : undefined;
-
   exec(cmd, { shell: shellOption }, (error, stdout, stderr) => {
     if (error) {
       console.error(chalk.red(`Error executing command: ${error.message}`));
@@ -37,11 +35,47 @@ function executeOSCommand(cmd) {
   });
 }
 
+async function automateTask(taskDescription, apiKey) {
+  const promptText = `Generate a bash script to ${taskDescription}`;
+  console.log(chalk.blue("Generating automation script..."));
+  const result = await queryGemini(apiKey, promptText);
+  if (result) {
+    const script =
+      result.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "[No script generated]";
+    console.log(chalk.yellow("Generated Script:"));
+    console.log(script);
+    const { executeScript } = await inquirer.prompt([
+      {
+        type: "confirm",
+        name: "executeScript",
+        message: "Do you want to execute this script?",
+        default: false,
+      },
+    ]);
+    if (executeScript) {
+      const platform = os.platform();
+      const shellOption = platform === "win32" ? "cmd.exe" : undefined;
+      exec(script, { shell: shellOption }, (error, stdout, stderr) => {
+        if (error) {
+          console.error(chalk.red(`Error executing script: ${error.message}`));
+          return;
+        }
+        if (stderr) {
+          console.error(chalk.red(`stderr: ${stderr}`));
+        }
+        console.log(chalk.green("Script Output:"), stdout);
+      });
+    }
+  } else {
+    console.log(chalk.red("No script generated for automation."));
+  }
+}
+
 export async function startInteractiveShell() {
   displayBanner();
-
   console.log(
-    chalk.blueBright("Entering interactive shell mode. Type 'exit' to quit. \n")
+    chalk.blueBright("Entering interactive shell mode. Type 'exit' to quit.\n")
   );
 
   const apiKey = await getApiKey();
@@ -61,16 +95,16 @@ export async function startInteractiveShell() {
       rl.close();
       return;
     }
+    
+    // Always add the user input to the conversation history
+    conversationHistory.push(`User: ${trimmedLine}`);
 
-    //Built-in commands -> system-info, automate can be checked.
-
+    // Handle built-in "list files" command
     if (trimmedLine.toLowerCase().startsWith("list files")) {
-      // Extract the directory path after "list files"
       let dir = trimmedLine.substring("list files".length).trim();
       if (!dir) {
         dir = process.cwd();
       }
-      // Resolve relative paths against current working directory
       dir = path.resolve(dir);
       try {
         const files = fs.readdirSync(dir);
@@ -79,16 +113,13 @@ export async function startInteractiveShell() {
           console.log(chalk.cyan(file));
         });
       } catch (err) {
-        console.error(
-          chalk.red(`Error listing files in ${dir}: ${err.message}`)
-        );
+        console.error(chalk.red(`Error listing files in ${dir}: ${err.message}`));
       }
       rl.prompt();
       return;
     }
 
-    //TODO: fix automate
-    // Handle the 'cd' command specially using process.chdir()
+    // Handle the "cd" command
     if (trimmedLine.startsWith("cd ")) {
       const dir = trimmedLine.slice(3).trim();
       try {
@@ -100,16 +131,28 @@ export async function startInteractiveShell() {
       rl.prompt();
       return;
     }
+    
+    // Handle built-in "system-info" command (if implemented)
     if (trimmedLine === "system-info") {
+      // Example: call systemInfo();
       rl.prompt();
       return;
     }
 
+    // Handle the "automate" command
     if (trimmedLine.toLowerCase().startsWith("automate ")) {
+      const taskDescription = trimmedLine.slice("automate ".length).trim();
+      if (!taskDescription) {
+        console.log(chalk.red("Please provide a task description for automation."));
+        rl.prompt();
+        return;
+      }
+      await automateTask(taskDescription, apiKey);
       rl.prompt();
       return;
     }
 
+    // Check if the input is an OS command by looking up the first token.
     const isCommand = await isOSCommand(trimmedLine);
     if (isCommand) {
       executeOSCommand(trimmedLine);
@@ -117,17 +160,14 @@ export async function startInteractiveShell() {
       return;
     }
 
-    conversationHistory.push(`User: ${trimmedLine}`);
+    // Otherwise, treat the input as a Gemini query.
     const contextPrompt = conversationHistory.join("\n");
-
     const result = await queryGemini(apiKey, contextPrompt);
-
     if (result) {
       const responseText =
         result.candidates?.[0]?.content?.parts?.[0]?.text ||
         "[No text response]";
-
-      console.log(chalk.yellow("Gemini Bot: "), chalk.yellow(responseText));
+      console.log(chalk.yellow("Gemini Bot:"), chalk.yellow(responseText));
       conversationHistory.push(`Gemini Bot: ${responseText}`);
     } else {
       console.log(chalk.red("No response from Gemini."));

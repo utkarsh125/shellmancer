@@ -11,6 +11,7 @@ import { getDefaultModel } from "./src/config.js";
 import { removeApiKey } from "./src/config.js";
 import { setModel } from "./src/commands/setModel.js";
 import { startChatbot } from "./src/commands/chatbot.js";
+import { startInteractiveShell } from "./src/commands/interactiveShell.js";
 import { systemInfo } from "./src/commands/systemInfo.js";
 import { updatePackage } from "./src/commands/update.js";
 
@@ -18,7 +19,9 @@ const args = process.argv.slice(2);
 
 if (args.length === 0) {
   // Default: start interactive chatbot mode
-  startChatbot();
+  // startChatbot();
+  //TODO: Fix the interactive mode, make it better
+  startInteractiveShell();
 } else {
   const command = args[0];
   switch (command) {

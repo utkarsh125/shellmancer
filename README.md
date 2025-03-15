@@ -1,4 +1,4 @@
-# [shellmancer](https://www.shellmancer.vercel.app/)
+# [shellmancer](https://shellmancer.vercel.app/)
 
 ![Node.js](https://img.shields.io/badge/Node.js-18%2B-green?logo=node.js)
 ![JavaScript](https://img.shields.io/badge/JavaScript-ES6%2B-yellow?logo=javascript)

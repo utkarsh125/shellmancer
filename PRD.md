@@ -65,20 +65,14 @@ Shellmancer is a minimal terminal chatbot that allows developers and power users
 - **Portability:** Support macOS, Linux, and Windows terminals where Node.js 18+ is available.
 - **UX:** Maintain accessible color schemes; log errors using distinct colors via Chalk.
 
-## 8. Success Metrics
 
-- Time-to-first-response after install < 2 minutes (install + API key entry).
-- >80% of active users retain stored API key (indicates trust and successful persistence).
-- Helper commands (`explain`, `generate-script`, `system-info`, `set-model`) account for ≥30% of total invocations, showing adoption beyond basic chat.
-- Issue rate for config corruption or API failures <2% of sessions.
-
-## 9. Dependencies
+## 8. Dependencies
 
 - Node.js 18+
 - npm for global install (`npm install -g shellmancer`)
 - Packages: axios, chalk, figlet, gradient-string, inquirer, nanospinner, remove-markdown.
 
-## 10. Risks & Mitigations
+## 9. Risks & Mitigations
 
 - **API changes:** Endpoint versioning handled via centralized `api.js` and `config.js`.
 - **User onboarding friction:** Inquirer prompts ensure API key is collected once; consider fallback instructions if key is invalid.

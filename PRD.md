@@ -1,9 +1,5 @@
 # Shellmancer Product Requirements Document
 
-**Timestamp:** 2025-06-03  
-**Version:** 1.0  
-**Author:** Product Team
-
 ## 1. Overview
 
 Shellmancer is a minimal terminal chatbot that allows developers and power users to interact with Google's Gemini 2.0 Flash API directly from the command line. The CLI emphasizes quick setup, persistent credentials, and a modern UX (ASCII banner, gradient prompts) while remaining lightweight and scriptable.

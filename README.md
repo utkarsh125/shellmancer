@@ -117,6 +117,8 @@ Built using:
 - [Inquirer](https://www.npmjs.com/package/inquirer) – Interactive CLI prompts
 - [Remove Markdown](https://www.npmjs.com/package/remove-markdown) – Clean text formatting
 
+more functionalities will be added to the project soon for small scale projects.
+
 ## 📜 License
 
 This project is licensed under the **MIT License**.

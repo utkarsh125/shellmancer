@@ -121,4 +121,4 @@ more functionalities will be added to the project soon for small scale projects.
 
 ## 📜 License
 
-This project is licensed under the **MIT License**.
+**MIT License**

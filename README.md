@@ -119,6 +119,4 @@ Built using:
 
 more functionalities will be added to the project soon for small scale projects.
 
-## 📜 License
 
-**MIT License**

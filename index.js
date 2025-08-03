@@ -7,13 +7,17 @@ import chalk from "chalk";
 import { explainCommand } from "./src/commands/explain.js";
 import { fixError } from "./src/commands/fix.js";
 import { generateScript } from "./src/commands/generateScript.js";
-import { getDefaultModel } from "./src/config.js";
+import { getDefaultModel, checkVersionAndCleanApiKey } from "./src/config.js";
 import { removeApiKey } from "./src/config.js";
 import { setModel } from "./src/commands/setModel.js";
 import { startChatbot } from "./src/commands/chatbot.js";
 import { startInteractiveShell } from "./src/commands/interactiveShell.js";
 import { systemInfo } from "./src/commands/systemInfo.js";
 import { updatePackage } from "./src/commands/update.js";
+
+// Check version and clean API key if package was updated
+// This must run before any command that might use the API key
+checkVersionAndCleanApiKey();
 
 const args = process.argv.slice(2);
 
@@ -89,6 +93,10 @@ if (args.length === 0) {
       break;
     case "--update":
       updatePackage();
+      break;
+    case "--check-version":
+      // Debug command to check version detection
+      checkVersionAndCleanApiKey(true);
       break;
     default:
       console.log(chalk.red("Invalid command. Use --help to see available options."));

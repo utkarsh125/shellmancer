@@ -33,7 +33,12 @@ export async function automateTask(description) {
     const commands = output
       .split("\n")
       .map((line) => line.trim())
-      .filter((line) => line.length > 0 && !line.startsWith("#"));
+      .filter(
+        (line) =>
+          line.length > 0 &&
+          !line.startsWith("#") &&
+          !line.startsWith("```")
+      );
 
     if (commands.length === 0) {
       console.log("No valid commands found to execute");
@@ -88,8 +93,17 @@ export async function automateTask(description) {
 //TODO:Learn about spawn processes
 function execCommand(command) {
   return new Promise((resolve, reject) => {
-    //spawn child
-    const child = spawn(command, { shell: true, stdio: "inherit" }); //inherit any interactive commands
+    // Choose shell explicitly so platform-specific commands work:
+    // - On Windows, prefer PowerShell so cmdlets like Test-Path / New-Item work.
+    // - On *nix, default to /bin/bash (or user shell if provided).
+    const shell =
+      process.platform === "win32"
+        ? "powershell.exe"
+        : process.env.SHELL || "/bin/bash";
+
+    // Spawn child process in the chosen shell and inherit stdio so
+    // interactive commands (like npx CLIs) behave correctly.
+    const child = spawn(command, { shell, stdio: "inherit" });
 
     child.on("error", (error) => {
       reject(error);

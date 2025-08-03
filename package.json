@@ -1,6 +1,6 @@
 {
   "name": "shellmancer",
-  "version": "1.1.0",
+  "version": "2.1.3",
   "description": "A simple AI based CLI helper tool",
   "main": "index.js",
   "type": "module",
@@ -8,7 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "shellmancer": "./index.js"
+    "shellmancer": "index.js"
   },
   "keywords": [],
   "author": "",

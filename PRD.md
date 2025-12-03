@@ -97,5 +97,3 @@ Shellmancer is a minimal terminal chatbot that allows developers and power users
 
 ---
 
-This PRD captures the current scope and provides a foundation for future planning, ensuring shellmancer’s CLI experience stays focused on fast, delightful Gemini interactions from the terminal.
-
